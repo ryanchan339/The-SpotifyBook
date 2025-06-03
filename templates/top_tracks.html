@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><title>Your Top Tracks</title></head>
+<body>
+  <h1>Your Top Tracks ({{ time_range.replace('_', ' ').title() }})</h1>
+  <ul>
+    {% for name in track_names %}
+      <li>{{ name }}</li>
+    {% endfor %}
+  </ul>
+
+  <form action="/create-playlist" method="post">
+  <label for="playlist_name">Playlist Name:</label><br>
+  <input type="text" id="playlist_name" name="playlist_name" placeholder="My Top Tracks Playlist" required>
+  <br><br>
+  <button type="submit">Create Playlist</button>
+  </form>
+
+</body>
+</html>
