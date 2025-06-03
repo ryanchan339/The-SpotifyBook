@@ -71,6 +71,9 @@ def callback():
     sessions = load_sessions()
     session_id = session.get("session_id")
 
+    if not session_id:
+        return "❌ Error: No session ID found. Did you visit a join link first?"
+
     if session_id in sessions:
         sessions[session_id].append({
             "user": profile["display_name"],
@@ -79,6 +82,7 @@ def callback():
         save_sessions(sessions)
 
     return redirect(f"/summary/{session_id}")
+
 
 
 @app.route("/choose-range")
