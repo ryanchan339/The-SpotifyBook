@@ -169,16 +169,17 @@ def merge(session_id):
 def choose_range():
     return render_template("choose_range.html")
 
-@app.route("/top-tracks", methods=["POST"])
+@app.route("/top-tracks", methods=["GET", "POST"])
 def top_tracks():
     token_info = session.get("token_info")
     if not token_info:
         return redirect("/login")
 
-    time_range = request.form.get("time_range", "medium_term")
+    # Use default range or posted value
+    time_range = request.form.get("time_range") or session.get("time_range", "medium_term")
     session["time_range"] = time_range
 
-    session_id = session["session_id"]
+    session_id = session.get("session_id", "solo")
     sp_oauth = make_sp_oauth(session_id)
 
     if token_info["expires_at"] < int(time.time()):
