@@ -203,9 +203,11 @@ def create_playlist():
     if not token_info:
         return redirect("/login")
 
-    session_id = session["session_id"]
+    session_id = session.get("session_id", "solo")  # fallback to solo
     sp_oauth = make_sp_oauth(session_id)
 
+    # Refresh token if expired
+    import time
     if token_info["expires_at"] < int(time.time()):
         token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
         session["token_info"] = token_info
@@ -213,21 +215,23 @@ def create_playlist():
     sp = Spotify(auth=token_info["access_token"])
     user_id = sp.current_user()["id"]
     track_uris = session.get("track_uris", [])
+
     playlist_name = request.form.get("playlist_name", "My Top Tracks")
 
     if not track_uris:
-        return "❌ No tracks to add. Go fetch your top tracks first."
+        return "❌ No tracks found. Go back and fetch your top tracks first."
 
     playlist = sp.user_playlist_create(
         user=user_id,
         name=playlist_name,
         public=True,
-        description="Created with Flask + Spotify"
+        description="Created with SpotifyBook"
     )
     sp.playlist_add_items(playlist_id=playlist["id"], items=track_uris)
 
     playlist_url = playlist["external_urls"]["spotify"]
     return render_template("playlist_created.html", playlist_url=playlist_url)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
