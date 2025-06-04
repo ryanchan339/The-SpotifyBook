@@ -175,7 +175,6 @@ def top_tracks():
     if not token_info:
         return redirect("/login")
 
-    # Use default range or posted value
     time_range = request.form.get("time_range") or session.get("time_range", "medium_term")
     session["time_range"] = time_range
 

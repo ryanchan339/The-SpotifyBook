@@ -8,6 +8,16 @@
 
   {% if session.solo_mode %}
     <p>You’re in <strong>solo mode</strong>. This playlist will be created in your account only.</p>
+
+    <form action="/top-tracks" method="post">
+      <label for="time_range">Choose time range:</label>
+      <select name="time_range" id="time_range">
+        <option value="short_term" {% if time_range == "short_term" %}selected{% endif %}>Past 4 Weeks</option>
+        <option value="medium_term" {% if time_range == "medium_term" %}selected{% endif %}>Last 6 Months</option>
+        <option value="long_term" {% if time_range == "long_term" %}selected{% endif %}>All Time</option>
+      </select>
+      <button type="submit">Refresh Tracks</button>
+    </form>
   {% endif %}
 
   <ul>
