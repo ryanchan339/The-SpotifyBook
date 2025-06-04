@@ -51,8 +51,28 @@ def index():
 
 @app.route("/login")
 def login():
+    sid = request.args.get("session_id")
+
+    if sid:
+        # Case 1: session_id was passed in the URL
+        session["session_id"] = sid
+    elif "session_id" not in session:
+        # Case 2: no session ID yet, so create a new one
+        sid = str(uuid.uuid4())
+        session["session_id"] = sid
+
+        # Store new session in sessions.json
+        sessions = load_sessions()
+        sessions[sid] = []
+        save_sessions(sessions)
+
+        # Redirect with session ID in URL (optional, helps debugging/sharing)
+        return redirect(f"/login?session_id={sid}")
+
+    # All good, now start Spotify login
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url)
+
 
 
 
