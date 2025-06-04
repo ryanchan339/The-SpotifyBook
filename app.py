@@ -167,16 +167,18 @@ def callback():
 def choose_range():
     return render_template("choose_range.html")
 
-@app.route("/top-tracks", methods=["GET", "POST"])
+@app.route("/top-tracks", methods=["POST"])
 def top_tracks():
     token_info = session.get("token_info")
     if not token_info:
         return redirect("/login")
 
-    time_range = request.form.get("time_range") or session.get("time_range", "medium_term")
+    time_range = request.form.get("time_range", "medium_term")
+    limit = int(request.form.get("limit", 20))  # 👈 default to 20
+
     session["time_range"] = time_range
 
-    session_id = session.get("session_id", "solo")
+    session_id = session["session_id"]
     sp_oauth = make_sp_oauth(session_id)
 
     if token_info["expires_at"] < int(time.time()):
@@ -184,7 +186,7 @@ def top_tracks():
         session["token_info"] = token_info
 
     sp = Spotify(auth=token_info["access_token"])
-    tracks = sp.current_user_top_tracks(limit=10, time_range=time_range)["items"]
+    tracks = sp.current_user_top_tracks(limit=limit, time_range=time_range)["items"]
 
     session["track_uris"] = [track["uri"] for track in tracks]
     session["track_names"] = [
@@ -194,6 +196,7 @@ def top_tracks():
     return render_template("top_tracks.html",
                            track_names=session["track_names"],
                            time_range=time_range)
+
 
 @app.route("/create-playlist", methods=["GET", "POST"])
 def create_playlist():
