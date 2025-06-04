@@ -1,5 +1,7 @@
-from flask import Flask, session, redirect, request, render_template
+import uuid
+import json
 import os
+from flask import Flask, session, redirect, request, render_template
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
@@ -16,9 +18,6 @@ sp_oauth = SpotifyOAuth(
     scope="user-top-read playlist-modify-public playlist-modify-private",
     auth_args={"show_dialog": True}
 )
-
-import uuid
-import json
 
 SESSION_STORE = "sessions.json"
 
@@ -46,25 +45,57 @@ def join(session_id):
     return redirect("/login")
 
 
+def make_sp_oauth(cache_path):
+    """
+    Create a SpotifyOAuth object for a given cache_path.
+    (We don't pass auth_args here, since this Spotipy version doesn't support it.)
+    """
+    return SpotifyOAuth(
+        client_id=os.getenv("SPOTIPY_CLIENT_ID"),
+        client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
+        redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
+        scope="user-top-read playlist-modify-public playlist-modify-private",
+        cache_path=cache_path
+    )
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
 @app.route("/login")
 def login():
+    # 1. If session_id was passed in the URL, use it:
     sid = request.args.get("session_id")
-
     if sid:
         session["session_id"] = sid
+
+    # 2. If there’s still no session_id in the Flask cookie, create one now:
     elif "session_id" not in session:
         sid = str(uuid.uuid4())
         session["session_id"] = sid
+
+        # Initialize an empty list for this session in sessions.json
         sessions = load_sessions()
         sessions[sid] = []
         save_sessions(sessions)
 
-    # ✅ Add the session_id as a state to persist across redirect
-    auth_url = sp_oauth.get_authorize_url(state=session["session_id"])
+        # Redirect to the same route but with ?session_id=<new-id> in the URL
+        return redirect(f"/login?session_id={sid}")
+
+    # 3. At this point, session["session_id"] is guaranteed:
+    session_id = session["session_id"]
+
+    # 4. Build a SpotifyOAuth that uses a unique cache file per session
+    cache_path = f".cache-{session_id}"
+    sp_oauth = make_sp_oauth(cache_path)
+
+    # 5. Generate the authorize URL, passing the session_id as 'state'
+    auth_url = sp_oauth.get_authorize_url(state=session_id)
+
+    # 6. Manually append '&show_dialog=true' so Spotify forces credential entry
+    if "show_dialog=true" not in auth_url:
+        auth_url += "&show_dialog=true"
+
     return redirect(auth_url)
 
 
@@ -72,29 +103,39 @@ def login():
 
 @app.route("/callback")
 def callback():
+    # 1. Spotify will redirect back with ?code=...&state=<session_id>
     code = request.args.get("code")
-    state = request.args.get("state")  # ✅ capture the session_id from redirect
+    state_session_id = request.args.get("state")
+
+    # 2. Use the same cache_path that we created in /login
+    session_id = state_session_id or session.get("session_id")
+    if not session_id:
+        return "❌ Error: Missing session ID. Please start or join a session first."
+
+    cache_path = f".cache-{session_id}"
+    sp_oauth = make_sp_oauth(cache_path)
+
+    # 3. Exchange the code for a token
     token_info = sp_oauth.get_access_token(code)
     session["token_info"] = token_info
+    session["session_id"] = session_id  # re-save it just in case
 
-    # ✅ use state if session_id wasn't already stored
-    session_id = session.get("session_id") or state
-    session["session_id"] = session_id
-
+    # 4. Now fetch the user profile & top tracks
     sp = Spotify(auth=token_info["access_token"])
     profile = sp.current_user()
-    time_range = "medium_term"
-    top_tracks = sp.current_user_top_tracks(limit=20, time_range=time_range)["items"]
-    track_uris = [track["uri"] for track in top_tracks]
+    top_tracks = sp.current_user_top_tracks(limit=20, time_range="medium_term")["items"]
+    track_uris = [t["uri"] for t in top_tracks]
 
-    sessions = load_sessions()
-    if session_id in sessions:
-        sessions[session_id].append({
+    # 5. Add this user’s data under sessions.json[session_id]
+    all_sessions = load_sessions()
+    if session_id in all_sessions:
+        all_sessions[session_id].append({
             "user": profile["display_name"],
             "tracks": track_uris
         })
-        save_sessions(sessions)
+        save_sessions(all_sessions)
 
+    # 6. Redirect to the summary page for that session
     return redirect(f"/summary/{session_id}")
 
 
