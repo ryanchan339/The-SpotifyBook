@@ -57,6 +57,7 @@ def join(session_id):
 @app.route("/login")
 def login():
     sid = request.args.get("session_id")
+
     if sid:
         session["session_id"] = sid
     elif "session_id" not in session:
@@ -67,23 +68,25 @@ def login():
         save_sessions(sessions)
 
     session_id = session["session_id"]
-    sp_oauth = make_sp_oauth(session_id)
+    sp_oauth = make_sp_oauth(session_id)  # ✅ create a new OAuth object per session
     auth_url = sp_oauth.get_authorize_url(state=session_id)
     return redirect(auth_url)
+
 
 @app.route("/callback")
 def callback():
     code = request.args.get("code")
-    state = request.args.get("state")
+    state = request.args.get("state")  # the session_id
     session_id = session.get("session_id") or state
     session["session_id"] = session_id
 
-    sp_oauth = make_sp_oauth(session_id)
+    sp_oauth = make_sp_oauth(session_id)  # ✅ use unique cache
     token_info = sp_oauth.get_access_token(code)
     session["token_info"] = token_info
 
     sp = Spotify(auth=token_info["access_token"])
     profile = sp.current_user()
+
     top_tracks = sp.current_user_top_tracks(limit=20, time_range="medium_term")["items"]
     track_uris = [track["uri"] for track in top_tracks]
 
@@ -96,6 +99,7 @@ def callback():
         save_sessions(sessions)
 
     return redirect(f"/summary/{session_id}")
+
 
 @app.route("/summary/<session_id>")
 def summary(session_id):
