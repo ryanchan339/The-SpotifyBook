@@ -197,16 +197,17 @@ def top_tracks():
                            track_names=session["track_names"],
                            time_range=time_range)
 
-@app.route("/create-playlist", methods=["POST"])
+@app.route("/create-playlist", methods=["GET", "POST"])
 def create_playlist():
+    if request.method == "GET":
+        return "GET method received ✅"
     token_info = session.get("token_info")
     if not token_info:
         return redirect("/login")
 
-    session_id = session.get("session_id", "solo")  # fallback to solo
+    session_id = session.get("session_id", "solo")
     sp_oauth = make_sp_oauth(session_id)
 
-    # Refresh token if expired
     import time
     if token_info["expires_at"] < int(time.time()):
         token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
@@ -219,7 +220,7 @@ def create_playlist():
     playlist_name = request.form.get("playlist_name", "My Top Tracks")
 
     if not track_uris:
-        return "❌ No tracks found. Go back and fetch your top tracks first."
+        return "❌ No tracks to add. Go back and fetch top tracks first."
 
     playlist = sp.user_playlist_create(
         user=user_id,
