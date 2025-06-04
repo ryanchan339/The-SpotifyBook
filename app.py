@@ -68,7 +68,7 @@ def login():
 
     session_id = session["session_id"]
     sp_oauth = make_sp_oauth(session_id)
-    auth_url = sp_oauth.get_authorize_url(state=session_id, show_dialog=True)
+    auth_url = sp_oauth.get_authorize_url(state=session_id)
     return redirect(auth_url)
 
 @app.route("/callback")
