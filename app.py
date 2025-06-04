@@ -43,10 +43,9 @@ def index():
 
 @app.route("/solo")
 def solo():
-    # Clear any previous group session
-    session.clear()
-    # Set a flag so we know it's solo mode
+    session.clear()  # clears previous login/token/session_id
     session["solo_mode"] = True
+    session["session_id"] = str(uuid.uuid4())  # force a new session ID for their cache
     return redirect("/login")
 
 @app.route("/new-session")
