@@ -47,7 +47,7 @@ def solo():
     session["solo_mode"] = True
     session["session_id"] = str(uuid.uuid4())  # force a new session ID for their cache
     return redirect("/login")
-
+"""
 @app.route("/new-session")
 def new_session():
     session_id = str(uuid.uuid4())
@@ -60,62 +60,6 @@ def new_session():
 def join(session_id):
     session["session_id"] = session_id
     return redirect("/login")
-
-@app.route("/login")
-def login():
-    sid = request.args.get("session_id")
-
-    if sid:
-        session["session_id"] = sid
-    elif "session_id" not in session:
-        sid = str(uuid.uuid4())
-        session["session_id"] = sid
-        sessions = load_sessions()
-        sessions[sid] = []
-        save_sessions(sessions)
-
-    session_id = session["session_id"]
-    sp_oauth = make_sp_oauth(session_id)  # ✅ create a new OAuth object per session
-    auth_url = sp_oauth.get_authorize_url(state=session_id)
-    return redirect(auth_url)
-
-
-@app.route("/callback")
-def callback():
-    code = request.args.get("code")
-    state = request.args.get("state")
-
-    session_id = session.get("session_id") or state
-    session["session_id"] = session_id
-
-    sp_oauth = make_sp_oauth(session_id)
-    token_info = sp_oauth.get_access_token(code)
-    session["token_info"] = token_info
-
-    sp = Spotify(auth=token_info["access_token"])
-    profile = sp.current_user()
-    top_tracks = sp.current_user_top_tracks(limit=20, time_range="medium_term")["items"]
-    track_uris = [track["uri"] for track in top_tracks]
-
-    # ✅ If solo mode: store in session and redirect to top-tracks display
-    if session.get("solo_mode"):
-        session["track_uris"] = track_uris
-        session["track_names"] = [
-            f"{t['name']} by {t['artists'][0]['name']}" for t in top_tracks
-        ]
-        return redirect("/top-tracks")
-
-    # Group session logic (unchanged)
-    sessions = load_sessions()
-    if session_id in sessions:
-        sessions[session_id].append({
-            "user": profile["display_name"],
-            "tracks": track_uris
-        })
-        save_sessions(sessions)
-
-    return redirect(f"/summary/{session_id}")
-
 
 @app.route("/summary/<session_id>")
 def summary(session_id):
@@ -163,6 +107,50 @@ def merge(session_id):
 
     except Exception as e:
         return f"❌ Unexpected error: {str(e)}"
+"""
+@app.route("/login")
+def login():
+    sid = request.args.get("session_id")
+
+    if sid:
+        session["session_id"] = sid
+    elif "session_id" not in session:
+        sid = str(uuid.uuid4())
+        session["session_id"] = sid
+        sessions = load_sessions()
+        sessions[sid] = []
+        save_sessions(sessions)
+
+    session_id = session["session_id"]
+    sp_oauth = make_sp_oauth(session_id)  # ✅ create a new OAuth object per session
+    auth_url = sp_oauth.get_authorize_url(state=session_id)
+    return redirect(auth_url)
+
+
+@app.route("/callback")
+def callback():
+    try:
+        code = request.args.get("code")
+        sp_oauth = make_sp_oauth(session.get("session_id", "solo"))
+        token_info = sp_oauth.get_access_token(code)
+        session["token_info"] = token_info
+
+        sp = Spotify(auth=token_info["access_token"])
+        profile = sp.current_user()
+        top_tracks = sp.current_user_top_tracks(limit=20)["items"]
+        track_uris = [track["uri"] for track in top_tracks]
+
+        session["track_uris"] = track_uris
+        session["track_names"] = [
+            f"{t['name']} by {t['artists'][0]['name']}" for t in top_tracks
+        ]
+        session["time_range"] = "medium_term"  # default
+
+        return redirect("/top-tracks")
+
+    except Exception as e:
+        print("❌ Callback error:", str(e))
+        return "❌ An error occurred during login. Try again."
 
 @app.route("/choose-range")
 def choose_range():
