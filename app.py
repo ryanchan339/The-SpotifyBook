@@ -195,8 +195,10 @@ def top_tracks():
     ]
 
     return render_template("top_tracks.html",
-                           track_names=session["track_names"],
-                           time_range=time_range)
+                       track_names=session["track_names"],
+                       time_range=time_range,
+                       track_limit=track_limit)
+
 
 
 

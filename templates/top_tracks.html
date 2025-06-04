@@ -24,12 +24,15 @@
       </select>
 
       <br><br>
-      <label for="limit">Number of Tracks (1–50):</label>
-      <input type="number" id="limit" name="limit" min="1" max="50" value="20">
+
+      <label for="track_limit">How many tracks (1–50):</label>
+      <input type="number" id="track_limit" name="track_limit" min="1" max="50" value="{{ track_limit or 20 }}">
 
       <br><br>
+
       <button type="submit">Refresh Tracks</button>
     </form>
+
   {% endif %}
 
   <ul>
