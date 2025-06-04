@@ -43,10 +43,11 @@ def index():
 
 @app.route("/solo")
 def solo():
-    session.clear()  # clears previous login/token/session_id
+    session.clear()
     session["solo_mode"] = True
-    session["session_id"] = str(uuid.uuid4())  # force a new session ID for their cache
+    session["session_id"] = str(uuid.uuid4())  # force new unique session ID
     return redirect("/login")
+
 """
 @app.route("/new-session")
 def new_session():
@@ -131,12 +132,21 @@ def login():
 def callback():
     try:
         code = request.args.get("code")
-        sp_oauth = make_sp_oauth(session.get("session_id", "solo"))
+        print("🔁 Received code:", code)
+
+        session_id = session.get("session_id", str(uuid.uuid4()))
+        session["session_id"] = session_id
+        sp_oauth = make_sp_oauth(session_id)
+
         token_info = sp_oauth.get_access_token(code)
+        print("✅ Got token")
+
         session["token_info"] = token_info
 
         sp = Spotify(auth=token_info["access_token"])
         profile = sp.current_user()
+        print("👤 Logged in as:", profile["display_name"])
+
         top_tracks = sp.current_user_top_tracks(limit=20)["items"]
         track_uris = [track["uri"] for track in top_tracks]
 
@@ -144,13 +154,14 @@ def callback():
         session["track_names"] = [
             f"{t['name']} by {t['artists'][0]['name']}" for t in top_tracks
         ]
-        session["time_range"] = "medium_term"  # default
+        session["time_range"] = "medium_term"
 
         return redirect("/top-tracks")
 
     except Exception as e:
-        print("❌ Callback error:", str(e))
-        return "❌ An error occurred during login. Try again."
+        print("❌ ERROR in /callback:", str(e))
+        return "❌ An error occurred during login. Please try again with a different account or contact the developer."
+
 
 @app.route("/choose-range")
 def choose_range():
