@@ -13,7 +13,8 @@ sp_oauth = SpotifyOAuth(
     client_id=os.getenv("SPOTIPY_CLIENT_ID"),
     client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
     redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI"),
-    scope="user-top-read playlist-modify-public playlist-modify-private"
+    scope="user-top-read playlist-modify-public playlist-modify-private",
+    auth_args={"show_dialog": True}
 )
 
 import uuid
