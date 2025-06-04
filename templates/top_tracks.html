@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <html>
-<head><title>Your Top Tracks</title></head>
+<head>
+  <title>Your Top Tracks</title>
+</head>
 <body>
   <h1>Your Top Tracks ({{ time_range.replace('_', ' ').title() }})</h1>
+
+  {% if session.solo_mode %}
+    <p>You’re in <strong>solo mode</strong>. This playlist will be created in your account only.</p>
+  {% endif %}
+
   <ul>
     {% for name in track_names %}
       <li>{{ name }}</li>
@@ -10,11 +17,14 @@
   </ul>
 
   <form action="/create-playlist" method="post">
-  <label for="playlist_name">Playlist Name:</label><br>
-  <input type="text" id="playlist_name" name="playlist_name" placeholder="My Top Tracks Playlist" required>
-  <br><br>
-  <button type="submit">Create Playlist</button>
+    <label for="playlist_name">Playlist Name:</label><br>
+    <input type="text" id="playlist_name" name="playlist_name"
+           placeholder="My Top Tracks Playlist" required>
+    <br><br>
+    <button type="submit">Create Playlist</button>
   </form>
 
+  <br>
+  <a href="/"><button type="button">⬅ Back to Home</button></a>
 </body>
 </html>

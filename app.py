@@ -41,6 +41,14 @@ def make_sp_oauth(session_id):
 def index():
     return render_template("index.html")
 
+@app.route("/solo")
+def solo():
+    # Clear any previous group session
+    session.clear()
+    # Set a flag so we know it's solo mode
+    session["solo_mode"] = True
+    return redirect("/login")
+
 @app.route("/new-session")
 def new_session():
     session_id = str(uuid.uuid4())
@@ -76,20 +84,29 @@ def login():
 @app.route("/callback")
 def callback():
     code = request.args.get("code")
-    state = request.args.get("state")  # the session_id
+    state = request.args.get("state")
+
     session_id = session.get("session_id") or state
     session["session_id"] = session_id
 
-    sp_oauth = make_sp_oauth(session_id)  # ✅ use unique cache
+    sp_oauth = make_sp_oauth(session_id)
     token_info = sp_oauth.get_access_token(code)
     session["token_info"] = token_info
 
     sp = Spotify(auth=token_info["access_token"])
     profile = sp.current_user()
-
     top_tracks = sp.current_user_top_tracks(limit=20, time_range="medium_term")["items"]
     track_uris = [track["uri"] for track in top_tracks]
 
+    # ✅ If solo mode: store in session and redirect to top-tracks display
+    if session.get("solo_mode"):
+        session["track_uris"] = track_uris
+        session["track_names"] = [
+            f"{t['name']} by {t['artists'][0]['name']}" for t in top_tracks
+        ]
+        return redirect("/top-tracks")
+
+    # Group session logic (unchanged)
     sessions = load_sessions()
     if session_id in sessions:
         sessions[session_id].append({

@@ -1,14 +1,17 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html>
-<head><title>Spotify App</title></head>
+<head>
+  <title>SpotifyBook</title>
+</head>
 <body>
-  <h1>Welcome</h1>
-  <a href="/login"><button>Log in with Spotify</button></a>
+  <h1>Welcome to SpotifyBook</h1>
+
+  <a href="/new-session">
+    <button>Create Group Session</button>
+  </a>
+
+  <a href="/solo">
+    <button>🎧 Just Me – My Top Tracks</button>
+  </a>
 </body>
 </html>
-<h1>Welcome to The SpotifyBook</h1>
-<form action="/new-session" method="get">
-    <button type="submit">Start New Session</button>
-</form>
-<p>Or paste your invite link from a friend to join their session.</p>
