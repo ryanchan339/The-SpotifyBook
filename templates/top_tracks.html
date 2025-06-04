@@ -4,7 +4,13 @@
   <title>Your Top Tracks</title>
 </head>
 <body>
-  <h1>Your Top Tracks ({{ time_range.replace('_', ' ').title() }})</h1>
+  {% set label_map = {
+  'short_term': 'Past 4 Weeks',
+  'medium_term': 'Past 6 Months',
+  'long_term': 'All Time'
+  } %}
+  <h1>Your Top Tracks ({{ label_map.get(time_range or 'medium_term') }})</h1>
+
 
   {% if session.solo_mode %}
     <p>You’re in <strong>solo mode</strong>. This playlist will be created in your account only.</p>
