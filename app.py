@@ -54,23 +54,16 @@ def login():
     sid = request.args.get("session_id")
 
     if sid:
-        # Case 1: session_id was passed in the URL
         session["session_id"] = sid
     elif "session_id" not in session:
-        # Case 2: no session ID yet, so create a new one
         sid = str(uuid.uuid4())
         session["session_id"] = sid
-
-        # Store new session in sessions.json
         sessions = load_sessions()
         sessions[sid] = []
         save_sessions(sessions)
 
-        # Redirect with session ID in URL (optional, helps debugging/sharing)
-        return redirect(f"/login?session_id={sid}")
-
-    # All good, now start Spotify login
-    auth_url = sp_oauth.get_authorize_url()
+    # ✅ Add the session_id as a state to persist across redirect
+    auth_url = sp_oauth.get_authorize_url(state=session["session_id"])
     return redirect(auth_url)
 
 
@@ -79,8 +72,13 @@ def login():
 @app.route("/callback")
 def callback():
     code = request.args.get("code")
+    state = request.args.get("state")  # ✅ capture the session_id from redirect
     token_info = sp_oauth.get_access_token(code)
     session["token_info"] = token_info
+
+    # ✅ use state if session_id wasn't already stored
+    session_id = session.get("session_id") or state
+    session["session_id"] = session_id
 
     sp = Spotify(auth=token_info["access_token"])
     profile = sp.current_user()
@@ -89,11 +87,6 @@ def callback():
     track_uris = [track["uri"] for track in top_tracks]
 
     sessions = load_sessions()
-    session_id = session.get("session_id")
-
-    if not session_id:
-        return "❌ Error: No session ID found. Did you visit a join link first?"
-
     if session_id in sessions:
         sessions[session_id].append({
             "user": profile["display_name"],
@@ -102,6 +95,7 @@ def callback():
         save_sessions(sessions)
 
     return redirect(f"/summary/{session_id}")
+
 
 
 
