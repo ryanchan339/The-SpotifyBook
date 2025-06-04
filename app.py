@@ -48,67 +48,7 @@ def solo():
     session["session_id"] = str(uuid.uuid4())  # force new unique session ID
     return redirect("/login")
 
-"""
-@app.route("/new-session")
-def new_session():
-    session_id = str(uuid.uuid4())
-    sessions = load_sessions()
-    sessions[session_id] = []
-    save_sessions(sessions)
-    return redirect(f"/join/{session_id}")
 
-@app.route("/join/<session_id>")
-def join(session_id):
-    session["session_id"] = session_id
-    return redirect("/login")
-
-@app.route("/summary/<session_id>")
-def summary(session_id):
-    sessions = load_sessions()
-    group = sessions.get(session_id, [])
-    return render_template("summary.html", users=group, session_id=session_id)
-
-@app.route("/merge/<session_id>", methods=["POST"])
-def merge(session_id):
-    token_info = session.get("token_info")
-    if not token_info:
-        return redirect("/login")
-
-    session_id = session.get("session_id")
-    sp_oauth = make_sp_oauth(session_id)
-
-    # Refresh token if needed
-    if token_info["expires_at"] < int(time.time()):
-        token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
-        session["token_info"] = token_info
-
-    try:
-        sp = Spotify(auth=token_info["access_token"])
-        user_id = sp.current_user()["id"]
-
-        sessions = load_sessions()
-        group = sessions.get(session_id, [])
-
-        if len(group) < 2:
-            return "❌ Need at least two users to merge."
-
-        all_tracks = [track for user in group for track in user["tracks"]]
-        track_counts = Counter(all_tracks)
-        merged_uris = [track for track, _ in track_counts.most_common(30)]
-
-        playlist = sp.user_playlist_create(
-            user=user_id,
-            name=f"Merged Playlist ({len(group)} users)",
-            public=True
-        )
-        sp.playlist_add_items(playlist["id"], merged_uris)
-
-        playlist_url = playlist["external_urls"]["spotify"]
-        return render_template("playlist_created.html", playlist_url=playlist_url)
-
-    except Exception as e:
-        return f"❌ Unexpected error: {str(e)}"
-"""
 @app.route("/login")
 def login():
     sid = request.args.get("session_id")
@@ -200,8 +140,6 @@ def top_tracks():
                        track_limit=track_limit)
 
 
-
-
 @app.route("/create-playlist", methods=["GET", "POST"])
 def create_playlist():
     if request.method == "GET":
@@ -241,3 +179,66 @@ def create_playlist():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+"""
+@app.route("/new-session")
+def new_session():
+    session_id = str(uuid.uuid4())
+    sessions = load_sessions()
+    sessions[session_id] = []
+    save_sessions(sessions)
+    return redirect(f"/join/{session_id}")
+
+@app.route("/join/<session_id>")
+def join(session_id):
+    session["session_id"] = session_id
+    return redirect("/login")
+
+@app.route("/summary/<session_id>")
+def summary(session_id):
+    sessions = load_sessions()
+    group = sessions.get(session_id, [])
+    return render_template("summary.html", users=group, session_id=session_id)
+
+@app.route("/merge/<session_id>", methods=["POST"])
+def merge(session_id):
+    token_info = session.get("token_info")
+    if not token_info:
+        return redirect("/login")
+
+    session_id = session.get("session_id")
+    sp_oauth = make_sp_oauth(session_id)
+
+    # Refresh token if needed
+    if token_info["expires_at"] < int(time.time()):
+        token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
+        session["token_info"] = token_info
+
+    try:
+        sp = Spotify(auth=token_info["access_token"])
+        user_id = sp.current_user()["id"]
+
+        sessions = load_sessions()
+        group = sessions.get(session_id, [])
+
+        if len(group) < 2:
+            return "❌ Need at least two users to merge."
+
+        all_tracks = [track for user in group for track in user["tracks"]]
+        track_counts = Counter(all_tracks)
+        merged_uris = [track for track, _ in track_counts.most_common(30)]
+
+        playlist = sp.user_playlist_create(
+            user=user_id,
+            name=f"Merged Playlist ({len(group)} users)",
+            public=True
+        )
+        sp.playlist_add_items(playlist["id"], merged_uris)
+
+        playlist_url = playlist["external_urls"]["spotify"]
+        return render_template("playlist_created.html", playlist_url=playlist_url)
+
+    except Exception as e:
+        return f"❌ Unexpected error: {str(e)}"
+"""

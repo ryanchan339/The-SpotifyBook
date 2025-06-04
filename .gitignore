@@ -1,0 +1,19 @@
+# Secrets
+.env
+
+# Spotify auth caches
+.cache*
+
+# Local Flask sessions
+sessions.json
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# VSCode settings (optional, if you don't want to share your workspace config)
+.vscode/
+
+# Mac OS / Windows system files (optional)
+.DS_Store
+Thumbs.db
