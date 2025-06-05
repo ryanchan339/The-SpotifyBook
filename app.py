@@ -126,7 +126,7 @@ def create_playlist():
     playlist = sp.user_playlist_create(
         user=user_id,
         name=playlist_name,
-        public=True,
+        public=False,
         description="Created with SpotifyBook"
     )
     sp.playlist_add_items(playlist_id=playlist["id"], items=track_uris)
