@@ -22,6 +22,20 @@ def make_sp_oauth(session_id):
         cache_path=f".cache-{session_id}"
     )
 
+def get_spotify_client():
+    token_info = session.get("token_info")
+    if not token_info:
+        return None
+
+    session_id = session.get("session_id", "solo")
+    sp_oauth = make_sp_oauth(session_id)
+
+    if token_info["expires_at"] < int(time.time()):
+        token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
+        session["token_info"] = token_info
+
+    return Spotify(auth=token_info["access_token"])
+
 # ---------- Routes ----------
 @app.route("/")
 def index():
@@ -68,8 +82,8 @@ def callback():
 
 @app.route("/top-tracks", methods=["GET", "POST"])
 def top_tracks():
-    token_info = session.get("token_info")
-    if not token_info:
+    sp = get_spotify_client()
+    if not sp:
         return redirect("/login")
 
     time_range = request.values.get("time_range", "medium_term")
@@ -78,14 +92,6 @@ def top_tracks():
     track_limit = int(request.values.get("track_limit", 20))
     track_limit = min(max(track_limit, 1), 50)
 
-    session_id = session.get("session_id", "solo")
-    sp_oauth = make_sp_oauth(session_id)
-
-    if token_info["expires_at"] < int(time.time()):
-        token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
-        session["token_info"] = token_info
-
-    sp = Spotify(auth=token_info["access_token"])
     tracks = sp.current_user_top_tracks(limit=track_limit, time_range=time_range)["items"]
 
     session["track_uris"] = [track["uri"] for track in tracks]
@@ -103,18 +109,10 @@ def create_playlist():
     if request.method == "GET":
         return "GET method received ✅"
 
-    token_info = session.get("token_info")
-    if not token_info:
+    sp = get_spotify_client()
+    if not sp:
         return redirect("/login")
 
-    session_id = session.get("session_id", "solo")
-    sp_oauth = make_sp_oauth(session_id)
-
-    if token_info["expires_at"] < int(time.time()):
-        token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
-        session["token_info"] = token_info
-
-    sp = Spotify(auth=token_info["access_token"])
     user_id = sp.current_user()["id"]
     track_uris = session.get("track_uris", [])
 
