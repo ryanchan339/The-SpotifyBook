@@ -2,7 +2,6 @@ import os
 import uuid
 import json
 import time
-from collections import Counter
 from flask import Flask, session, redirect, request, render_template
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
@@ -13,20 +12,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
-SESSION_STORE = "sessions.json"
-
-# ---------- Session File Helpers ----------
-def load_sessions():
-    if not os.path.exists(SESSION_STORE):
-        return {}
-    with open(SESSION_STORE, "r") as f:
-        return json.load(f)
-
-def save_sessions(sessions):
-    with open(SESSION_STORE, "w") as f:
-        json.dump(sessions, f, indent=2)
-
-# ---------- Per-Session Spotify OAuth ----------
+# ---------- Spotify OAuth Helper ----------
 def make_sp_oauth(session_id):
     return SpotifyOAuth(
         client_id=os.getenv("SPOTIPY_CLIENT_ID"),
@@ -45,67 +31,40 @@ def index():
 def solo():
     session.clear()
     session["solo_mode"] = True
-    session["session_id"] = str(uuid.uuid4())  # force new unique session ID
+    session["session_id"] = str(uuid.uuid4())
     return redirect("/login")
-
 
 @app.route("/login")
 def login():
-    sid = request.args.get("session_id")
-
-    if sid:
-        session["session_id"] = sid
-    elif "session_id" not in session:
-        sid = str(uuid.uuid4())
-        session["session_id"] = sid
-        sessions = load_sessions()
-        sessions[sid] = []
-        save_sessions(sessions)
-
-    session_id = session["session_id"]
-    sp_oauth = make_sp_oauth(session_id)  # ✅ create a new OAuth object per session
+    session_id = session.get("session_id") or str(uuid.uuid4())
+    session["session_id"] = session_id
+    sp_oauth = make_sp_oauth(session_id)
     auth_url = sp_oauth.get_authorize_url(state=session_id)
     return redirect(auth_url)
-
 
 @app.route("/callback")
 def callback():
     try:
         code = request.args.get("code")
-        print("🔁 Received code:", code)
-
         session_id = session.get("session_id", str(uuid.uuid4()))
         session["session_id"] = session_id
         sp_oauth = make_sp_oauth(session_id)
-
         token_info = sp_oauth.get_access_token(code)
-        print("✅ Got token")
-
         session["token_info"] = token_info
 
         sp = Spotify(auth=token_info["access_token"])
-        profile = sp.current_user()
-        print("👤 Logged in as:", profile["display_name"])
-
         top_tracks = sp.current_user_top_tracks(limit=20)["items"]
-        track_uris = [track["uri"] for track in top_tracks]
 
-        session["track_uris"] = track_uris
+        session["track_uris"] = [track["uri"] for track in top_tracks]
         session["track_names"] = [
             f"{t['name']} by {t['artists'][0]['name']}" for t in top_tracks
         ]
         session["time_range"] = "medium_term"
 
         return redirect("/top-tracks")
-
     except Exception as e:
         print("❌ ERROR in /callback:", str(e))
-        return "❌ An error occurred during login. Please try again with a different account or contact the developer."
-
-
-@app.route("/choose-range")
-def choose_range():
-    return render_template("choose_range.html")
+        return "❌ An error occurred during login."
 
 @app.route("/top-tracks", methods=["GET", "POST"])
 def top_tracks():
@@ -117,7 +76,7 @@ def top_tracks():
     session["time_range"] = time_range
 
     track_limit = int(request.values.get("track_limit", 20))
-    track_limit = min(max(track_limit, 1), 50)  # clamp between 1 and 50
+    track_limit = min(max(track_limit, 1), 50)
 
     session_id = session.get("session_id", "solo")
     sp_oauth = make_sp_oauth(session_id)
@@ -135,15 +94,15 @@ def top_tracks():
     ]
 
     return render_template("top_tracks.html",
-                       track_names=session["track_names"],
-                       time_range=time_range,
-                       track_limit=track_limit)
-
+                           track_names=session["track_names"],
+                           time_range=time_range,
+                           track_limit=track_limit)
 
 @app.route("/create-playlist", methods=["GET", "POST"])
 def create_playlist():
     if request.method == "GET":
         return "GET method received ✅"
+
     token_info = session.get("token_info")
     if not token_info:
         return redirect("/login")
@@ -151,7 +110,6 @@ def create_playlist():
     session_id = session.get("session_id", "solo")
     sp_oauth = make_sp_oauth(session_id)
 
-    import time
     if token_info["expires_at"] < int(time.time()):
         token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
         session["token_info"] = token_info
@@ -176,69 +134,5 @@ def create_playlist():
     playlist_url = playlist["external_urls"]["spotify"]
     return render_template("playlist_created.html", playlist_url=playlist_url)
 
-
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-"""
-@app.route("/new-session")
-def new_session():
-    session_id = str(uuid.uuid4())
-    sessions = load_sessions()
-    sessions[session_id] = []
-    save_sessions(sessions)
-    return redirect(f"/join/{session_id}")
-
-@app.route("/join/<session_id>")
-def join(session_id):
-    session["session_id"] = session_id
-    return redirect("/login")
-
-@app.route("/summary/<session_id>")
-def summary(session_id):
-    sessions = load_sessions()
-    group = sessions.get(session_id, [])
-    return render_template("summary.html", users=group, session_id=session_id)
-
-@app.route("/merge/<session_id>", methods=["POST"])
-def merge(session_id):
-    token_info = session.get("token_info")
-    if not token_info:
-        return redirect("/login")
-
-    session_id = session.get("session_id")
-    sp_oauth = make_sp_oauth(session_id)
-
-    # Refresh token if needed
-    if token_info["expires_at"] < int(time.time()):
-        token_info = sp_oauth.refresh_access_token(token_info["refresh_token"])
-        session["token_info"] = token_info
-
-    try:
-        sp = Spotify(auth=token_info["access_token"])
-        user_id = sp.current_user()["id"]
-
-        sessions = load_sessions()
-        group = sessions.get(session_id, [])
-
-        if len(group) < 2:
-            return "❌ Need at least two users to merge."
-
-        all_tracks = [track for user in group for track in user["tracks"]]
-        track_counts = Counter(all_tracks)
-        merged_uris = [track for track, _ in track_counts.most_common(30)]
-
-        playlist = sp.user_playlist_create(
-            user=user_id,
-            name=f"Merged Playlist ({len(group)} users)",
-            public=True
-        )
-        sp.playlist_add_items(playlist["id"], merged_uris)
-
-        playlist_url = playlist["external_urls"]["spotify"]
-        return render_template("playlist_created.html", playlist_url=playlist_url)
-
-    except Exception as e:
-        return f"❌ Unexpected error: {str(e)}"
-"""
