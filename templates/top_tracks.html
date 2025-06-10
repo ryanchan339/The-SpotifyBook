@@ -2,15 +2,47 @@
 <html>
 <head>
   <title>Your Top Tracks</title>
+  <style>
+    .track-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .track-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .track-item img {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+    }
+
+    .track-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .track-name {
+      font-weight: bold;
+    }
+
+    .track-artist {
+      color: gray;
+    }
+  </style>
 </head>
 <body>
   {% set label_map = {
-  'short_term': 'Past 4 Weeks',
-  'medium_term': 'Past 6 Months',
-  'long_term': 'All Time'
+    'short_term': 'Past 4 Weeks',
+    'medium_term': 'Past 6 Months',
+    'long_term': 'All Time'
   } %}
   <h1>Your Top Tracks ({{ label_map.get(time_range or 'medium_term') }})</h1>
-
 
   {% if session.solo_mode %}
     <p>You’re in <strong>solo mode</strong>. This playlist will be created in your account only.</p>
@@ -32,22 +64,23 @@
 
       <button type="submit">Refresh Tracks</button>
     </form>
-
   {% endif %}
 
-  <div style="display: flex; flex-direction: column; align-items: center;">
+  <!-- 🔥 Track Display Section -->
+  <div class="track-list">
     {% for track in track_info %}
-      <div style="margin-bottom: 30px; text-align: center;">
-        <img src="{{ track.image }}" alt="Album cover" width="150" height="150"><br>
-        <div style="margin-top: 8px;"><strong>{{ track.name }}</strong></div>
-        <div style="color: gray;">{{ track.artist }}</div>
+      <div class="track-item">
+        <img src="{{ track.image }}" alt="Album cover">
+        <div class="track-info">
+          <div class="track-name">{{ track.name }}</div>
+          <div class="track-artist">{{ track.artist }}</div>
+        </div>
       </div>
     {% endfor %}
   </div>
 
-
-
   <form action="/create-playlist" method="post">
+    <br>
     <label for="playlist_name">Playlist Name:</label><br>
     <input type="text" id="playlist_name" name="playlist_name"
            placeholder="My Top Tracks Playlist" required>
