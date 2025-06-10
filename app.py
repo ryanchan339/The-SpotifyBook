@@ -101,7 +101,8 @@ def top_tracks():
     track_limit = min(max(track_limit, 1), 50)
 
     tracks = sp.current_user_top_tracks(limit=track_limit, time_range=time_range)["items"]
-
+    for track in tracks:
+        print(f"{track['name']}: {track['preview_url']}")
     session["track_info"] = [
         {
             "name": track["name"],
