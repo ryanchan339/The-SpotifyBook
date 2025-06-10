@@ -84,7 +84,7 @@ def callback():
 
         session["time_range"] = "medium_term"
 
-        return redirect("/select")
+        return redirect("/top-tracks")
     except Exception as e:
         print("❌ ERROR in /callback:", str(e))
         return "❌ An error occurred during login."
@@ -102,7 +102,7 @@ def api_top_tracks():
         return jsonify({"error": "Not logged in"}), 401
 
     time_range = request.args.get("time_range", "medium_term")
-    track_limit = int(request.args.get("limit", 20))
+    track_limit = int(request.args.get("limit", 50))
 
     try:
         tracks = sp.current_user_top_tracks(limit=track_limit, time_range=time_range)["items"]
