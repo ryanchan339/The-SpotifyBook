@@ -89,36 +89,9 @@ def callback():
         print("❌ ERROR in /callback:", str(e))
         return "❌ An error occurred during login."
 
-@app.route("/top-tracks", methods=["GET", "POST"])
+@app.route("/top-tracks")
 def top_tracks():
-    sp = get_spotify_client()
-    if not sp:
-        return redirect("/login")
-
-    time_range = request.values.get("time_range", "medium_term")
-    session["time_range"] = time_range
-
-    track_limit = int(request.values.get("track_limit", 20))
-    track_limit = min(max(track_limit, 1), 50)
-
-    tracks = sp.current_user_top_tracks(limit=track_limit, time_range=time_range)["items"]
-    for track in tracks:
-        print(f"{track['name']}: {track['preview_url']}")
-    session["track_info"] = [
-        {
-            "name": track["name"],
-            "artist": track["artists"][0]["name"],
-            "uri": track["uri"],
-            "image": track["album"]["images"][0]["url"],
-            "preview_url": track["preview_url"]
-        }
-        for track in tracks
-    ]
-
-    return render_template("top_tracks.html",
-                       track_info=session["track_info"],
-                       time_range=time_range,
-                       track_limit=track_limit)
+    return render_template("top_tracks.html")
 
 
 
@@ -137,7 +110,7 @@ def api_top_tracks():
         print("❌ ERROR in /api/top-tracks:", str(e))
         return jsonify({"error": "Failed to fetch tracks"}), 500
 
-    return jsonify([
+    track_info = [
         {
             "name": t["name"],
             "artist": t["artists"][0]["name"],
@@ -146,7 +119,12 @@ def api_top_tracks():
             "preview_url": t["preview_url"]
         }
         for t in tracks
-    ])
+    ]
+
+    session["track_info"] = track_info  # ✅ Store for create-playlist
+
+    return jsonify(track_info)
+
 
 
 @app.route("/top-artists")
