@@ -113,7 +113,13 @@ def top_tracks():
         }
         for track in tracks
     ]
-
+    session["track_info"].append({
+        "name": "Blinding Lights",
+        "artist": "The Weeknd",
+        "uri": "spotify:track:0VjIjW4GlUZAMYd2vXMi3b",
+        "image": "https://i.scdn.co/image/ab67616d0000b273d56c308c2f08ecafdc1c2878",
+        "preview_url": "https://p.scdn.co/mp3-preview/5b66f80f28297f06cd13f9a84a32164fc0c7a9cf?cid=d8a5ed958d274c2e8ee717e6a4b0971d"
+    })
 
     return render_template("top_tracks.html",
                        track_info=session["track_info"],
