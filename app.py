@@ -83,7 +83,7 @@ def callback():
 
         session["time_range"] = "medium_term"
 
-        return redirect("/top-tracks")
+        return redirect("/select")
     except Exception as e:
         print("❌ ERROR in /callback:", str(e))
         return "❌ An error occurred during login."
@@ -113,18 +113,32 @@ def top_tracks():
         }
         for track in tracks
     ]
-    session["track_info"].append({
-        "name": "Blinding Lights",
-        "artist": "The Weeknd",
-        "uri": "spotify:track:0VjIjW4GlUZAMYd2vXMi3b",
-        "image": "https://i.scdn.co/image/ab67616d0000b273d56c308c2f08ecafdc1c2878",
-        "preview_url": "https://p.scdn.co/mp3-preview/5b66f80f28297f06cd13f9a84a32164fc0c7a9cf?cid=d8a5ed958d274c2e8ee717e6a4b0971d"
-    })
 
     return render_template("top_tracks.html",
                        track_info=session["track_info"],
                        time_range=time_range,
                        track_limit=track_limit)
+
+@app.route("/top-artists")
+def top_artists():
+    sp = get_spotify_client()
+    if not sp:
+        return redirect("/login")
+
+    artists = sp.current_user_top_artists(limit=20)["items"]
+
+    artist_info = [
+        {
+            "name": artist["name"],
+            "image": artist["images"][0]["url"] if artist["images"] else None,
+            "genres": artist["genres"],
+            "spotify_url": artist["external_urls"]["spotify"]
+        }
+        for artist in artists
+    ]
+
+    return render_template("top_artists.html", artist_info=artist_info)
+
 
 @app.route("/create-playlist", methods=["GET", "POST"])
 def create_playlist():
@@ -155,6 +169,11 @@ def create_playlist():
 
     playlist_url = playlist["external_urls"]["spotify"]
     return render_template("playlist_created.html", playlist_url=playlist_url)
+
+@app.route("/select")
+def select_mode():
+    return render_template("select_mode.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)

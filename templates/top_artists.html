@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Your Top Artists</title>
+</head>
+<body>
+  <h1>Your Top Artists</h1>
+
+  <ul>
+    {% for artist in artist_info %}
+      <li style="margin-bottom: 20px;">
+        {% if artist.image %}
+          <img src="{{ artist.image }}" width="100"><br>
+        {% endif %}
+        <strong>{{ artist.name }}</strong><br>
+        <small>Genres: {{ artist.genres | join(', ') }}</small><br>
+        <a href="{{ artist.spotify_url }}" target="_blank">🔗 Open in Spotify</a>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <br>
+  <a href="/select"><button>⬅ Back</button></a>
+</body>
+</html>
