@@ -35,15 +35,16 @@
 
   {% endif %}
 
-  <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+  <div style="display: flex; flex-direction: column; align-items: center;">
     {% for track in track_info %}
-      <div style="width: 200px; text-align: center;">
+      <div style="margin-bottom: 30px; text-align: center;">
         <img src="{{ track.image }}" alt="Album cover" width="150" height="150"><br>
-        <strong>{{ track.name }}</strong><br>
-        <small>{{ track.artist }}</small>
+        <div style="margin-top: 8px;"><strong>{{ track.name }}</strong></div>
+        <div style="color: gray;">{{ track.artist }}</div>
       </div>
     {% endfor %}
   </div>
+
 
 
   <form action="/create-playlist" method="post">
