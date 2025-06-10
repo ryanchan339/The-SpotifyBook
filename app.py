@@ -151,25 +151,23 @@ def top_artists():
 def api_top_artists():
     sp = get_spotify_client()
     if not sp:
-        return jsonify({"error": "Not logged in"}), 401
+        return {"error": "Not authenticated"}, 401
 
     time_range = request.args.get("time_range", "medium_term")
-    limit = int(request.args.get("limit", 20))
 
-    try:
-        artists = sp.current_user_top_artists(limit=limit, time_range=time_range)["items"]
-    except Exception as e:
-        print("❌ ERROR in /api/top-artists:", str(e))
-        return jsonify({"error": "Failed to fetch artists"}), 500
+    artists = sp.current_user_top_artists(limit=20, time_range=time_range)["items"]
 
-    return jsonify([
+    result = [
         {
-            "name": a["name"],
-            "image": a["images"][0]["url"] if a["images"] else None,
-            "genres": a["genres"]
+            "name": artist["name"],
+            "genres": artist.get("genres", []),
+            "image": artist["images"][0]["url"] if artist["images"] else ""
         }
-        for a in artists
-    ])
+        for artist in artists
+    ]
+
+    return result
+
 
 
 @app.route("/create-playlist", methods=["GET", "POST"])

@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Your Spotify Stats</title>
+  <title>Your Top Tracks</title>
   <style>
     .nav {
       margin-top: 20px;
       display: flex;
       gap: 20px;
     }
-
     .nav button {
       padding: 10px 20px;
       font-weight: bold;
@@ -16,18 +15,15 @@
       background-color: #eee;
       cursor: pointer;
     }
-
     .nav button.active {
       background-color: #ccc;
     }
-
-    .track-list, .artist-list {
+    .track-list {
       display: flex;
       flex-direction: column;
       gap: 20px;
       margin-top: 30px;
     }
-
     .item {
       display: flex;
       justify-content: space-between;
@@ -35,112 +31,87 @@
       border-bottom: 1px solid #ccc;
       padding-bottom: 10px;
     }
-
     .left {
       display: flex;
       align-items: center;
       gap: 15px;
     }
-
     .left img {
       width: 80px;
       height: 80px;
       border-radius: 8px;
     }
-
     .info {
       display: flex;
       flex-direction: column;
     }
-
     .name {
       font-weight: bold;
     }
-
     .sub {
       color: gray;
     }
-
     .audio-preview {
       min-width: 200px;
     }
   </style>
 </head>
 <body>
-  <h1>Your Spotify Stats</h1>
+  <h1>Your Top Tracks</h1>
 
-  <!-- 🔁 Nav toggle -->
   <div class="nav">
-    <button id="tracks-tab" class="active" onclick="loadCategory('tracks')">Top Tracks</button>
-    <button id="artists-tab" onclick="loadCategory('artists')">Top Artists</button>
+    <a href="/top-tracks"><button class="active">Top Tracks</button></a>
+    <a href="/top-artists"><button>Top Artists</button></a>
   </div>
 
-  <!-- 🧾 Playlist creation form (tracks only) -->
-  <form id="playlist-form" action="/create-playlist" method="post" style="margin-top: 20px;">
+  <label for="time_range">Choose time range:</label>
+  <select id="time_range" onchange="loadTracks()">
+    <option value="short_term">Past 4 Weeks</option>
+    <option value="medium_term" selected>Past 6 Months</option>
+    <option value="long_term">All Time</option>
+  </select>
+
+  <form action="/create-playlist" method="post" style="margin-top: 20px;">
     <label for="playlist_name">Playlist Name:</label><br>
     <input type="text" id="playlist_name" name="playlist_name" placeholder="My Top Tracks Playlist" required>
     <br><br>
-    <button type="submit">🎶 Create Playlist</button>
+    <button type="submit">Create Playlist</button>
   </form>
 
-  <!-- 🚀 Dynamic content goes here -->
-  <div id="content-container" class="track-list"></div>
+  <div id="track-container" class="track-list"></div>
 
   <script>
-    async function loadCategory(type) {
-      // Update nav state
-      document.getElementById('tracks-tab').classList.toggle('active', type === 'tracks');
-      document.getElementById('artists-tab').classList.toggle('active', type === 'artists');
+    async function loadTracks() {
+      const timeRange = document.getElementById("time_range").value;
+      const res = await fetch(`/api/top-tracks?time_range=${timeRange}`);
+      const data = await res.json();
 
-      // Show/hide playlist form
-      document.getElementById('playlist-form').style.display = type === 'tracks' ? 'block' : 'none';
-
-      const response = await fetch(`/api/top-${type}`);
-      const data = await response.json();
-
-      const container = document.getElementById("content-container");
+      const container = document.getElementById("track-container");
       container.innerHTML = "";
 
-      if (type === "tracks") {
-        container.className = "track-list";
-        data.forEach(track => {
-          container.innerHTML += `
-            <div class="item">
-              <div class="left">
-                <img src="${track.image}" alt="Album cover">
-                <div class="info">
-                  <div class="name">${track.name}</div>
-                  <div class="sub">${track.artist}</div>
-                </div>
+      data.forEach(track => {
+        container.innerHTML += `
+          <div class="item">
+            <div class="left">
+              <img src="${track.image}" alt="Album cover">
+              <div class="info">
+                <div class="name">${track.name}</div>
+                <div class="sub">${track.artist}</div>
               </div>
-              <div class="audio-preview">
-                ${track.preview_url ? `
-                  <audio controls style="width:180px;">
-                    <source src="${track.preview_url}" type="audio/mpeg">
-                  </audio>` :
-                  `<div style="color: red;">No preview</div>`}
-              </div>
-            </div>`;
-        });
-      } else {
-        container.className = "artist-list";
-        data.forEach(artist => {
-          container.innerHTML += `
-            <div class="item">
-              <div class="left">
-                <img src="${artist.image}" alt="Artist image">
-                <div class="info">
-                  <div class="name">${artist.name}</div>
-                  <div class="sub">${artist.genres.join(', ')}</div>
-                </div>
-              </div>
-            </div>`;
-        });
-      }
+            </div>
+            <div class="audio-preview">
+              ${track.preview_url ? `
+                <audio controls style="width:180px;">
+                  <source src="${track.preview_url}" type="audio/mpeg">
+                </audio>
+              ` : `<div style="color: red;">No preview</div>`}
+            </div>
+          </div>`;
+      });
     }
 
-    // Default view
-    loadCategory('tracks');
+    // Load default on page load
+    loadTracks();
   </script>
 </body>
 </html>
