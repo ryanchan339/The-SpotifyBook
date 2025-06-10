@@ -6,6 +6,7 @@ from flask import Flask, session, redirect, request, render_template
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
+from flask import jsonify
 
 load_dotenv()
 
@@ -118,6 +119,35 @@ def top_tracks():
                        track_info=session["track_info"],
                        time_range=time_range,
                        track_limit=track_limit)
+
+
+
+@app.route("/api/top-tracks")
+def api_top_tracks():
+    sp = get_spotify_client()
+    if not sp:
+        return jsonify({"error": "Not logged in"}), 401
+
+    time_range = request.args.get("time_range", "medium_term")
+    track_limit = int(request.args.get("limit", 20))
+
+    try:
+        tracks = sp.current_user_top_tracks(limit=track_limit, time_range=time_range)["items"]
+    except Exception as e:
+        print("❌ ERROR in /api/top-tracks:", str(e))
+        return jsonify({"error": "Failed to fetch tracks"}), 500
+
+    return jsonify([
+        {
+            "name": t["name"],
+            "artist": t["artists"][0]["name"],
+            "uri": t["uri"],
+            "image": t["album"]["images"][0]["url"] if t["album"]["images"] else None,
+            "preview_url": t["preview_url"]
+        }
+        for t in tracks
+    ])
+
 
 @app.route("/top-artists")
 def top_artists():
