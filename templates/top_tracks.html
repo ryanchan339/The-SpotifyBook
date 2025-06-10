@@ -45,6 +45,18 @@
 
     .audio-preview {
       min-width: 200px;
+      text-align: right;
+    }
+
+    .spotify-link {
+      font-size: 0.9em;
+      color: #1DB954;
+      text-decoration: none;
+    }
+
+    .no-preview {
+      color: red;
+      font-size: 0.9em;
     }
   </style>
 </head>
@@ -91,7 +103,7 @@
           </div>
         </div>
 
-        <!-- Right side: preview audio -->
+        <!-- Right side: preview audio or link -->
         <div class="audio-preview">
           {% if track.preview_url %}
             <audio controls style="width: 180px;">
@@ -99,23 +111,7 @@
               Your browser does not support the audio element.
             </audio>
           {% else %}
-            <div style="color: red; font-size: 0.9em;">No preview</div>
+            <div class="no-preview">No preview</div>
           {% endif %}
-        </div>
-      </div>
-    {% endfor %}
-  </div>
-
-  <form action="/create-playlist" method="post">
-    <br>
-    <label for="playlist_name">Playlist Name:</label><br>
-    <input type="text" id="playlist_name" name="playlist_name"
-           placeholder="My Top Tracks Playlist" required>
-    <br><br>
-    <button type="submit">Create Playlist</button>
-  </form>
-
-  <br>
-  <a href="/"><button type="button">⬅ Back to Home</button></a>
-</body>
-</html>
+          <br>
+          <a class="spotify-link" href="https://open.spotify.com/track/{{ track.uri.s
