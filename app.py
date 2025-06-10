@@ -74,10 +74,12 @@ def callback():
                 "name": track["name"],
                 "artist": track["artists"][0]["name"],
                 "uri": track["uri"],
-                "image": track["album"]["images"][0]["url"] if track["album"]["images"] else ""
+                "image": track["album"]["images"][0]["url"],
+                "preview_url": track["preview_url"]
             }
             for track in tracks
         ]
+
 
         session["time_range"] = "medium_term"
 
@@ -105,10 +107,12 @@ def top_tracks():
             "name": track["name"],
             "artist": track["artists"][0]["name"],
             "uri": track["uri"],
-            "image": track["album"]["images"][0]["url"] if track["album"]["images"] else ""
+            "image": track["album"]["images"][0]["url"],
+            "preview_url": track["preview_url"]
         }
         for track in tracks
     ]
+
 
     return render_template("top_tracks.html",
                        track_info=session["track_info"],

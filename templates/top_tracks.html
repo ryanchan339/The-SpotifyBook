@@ -12,6 +12,14 @@
 
     .track-item {
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+    }
+
+    .track-left {
+      display: flex;
       align-items: center;
       gap: 15px;
     }
@@ -33,6 +41,10 @@
 
     .track-artist {
       color: gray;
+    }
+
+    .audio-preview {
+      min-width: 200px;
     }
   </style>
 </head>
@@ -70,10 +82,25 @@
   <div class="track-list">
     {% for track in track_info %}
       <div class="track-item">
-        <img src="{{ track.image }}" alt="Album cover">
-        <div class="track-info">
-          <div class="track-name">{{ track.name }}</div>
-          <div class="track-artist">{{ track.artist }}</div>
+        <!-- Left side: album cover + info -->
+        <div class="track-left">
+          <img src="{{ track.image }}" alt="Album cover">
+          <div class="track-info">
+            <div class="track-name">{{ track.name }}</div>
+            <div class="track-artist">{{ track.artist }}</div>
+          </div>
+        </div>
+
+        <!-- Right side: preview audio -->
+        <div class="audio-preview">
+          {% if track.preview_url %}
+            <audio controls style="width: 180px;">
+              <source src="{{ track.preview_url }}" type="audio/mpeg">
+              Your browser does not support the audio element.
+            </audio>
+          {% else %}
+            <div style="color: red; font-size: 0.9em;">No preview</div>
+          {% endif %}
         </div>
       </div>
     {% endfor %}
