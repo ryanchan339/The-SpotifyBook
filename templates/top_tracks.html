@@ -35,11 +35,16 @@
 
   {% endif %}
 
-  <ul>
-    {% for name in track_names %}
-      <li>{{ name }}</li>
+  <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+    {% for track in track_info %}
+      <div style="width: 200px; text-align: center;">
+        <img src="{{ track.image }}" alt="Album cover" width="150" height="150"><br>
+        <strong>{{ track.name }}</strong><br>
+        <small>{{ track.artist }}</small>
+      </div>
     {% endfor %}
-  </ul>
+  </div>
+
 
   <form action="/create-playlist" method="post">
     <label for="playlist_name">Playlist Name:</label><br>

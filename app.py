@@ -67,12 +67,18 @@ def callback():
         session["token_info"] = token_info
 
         sp = Spotify(auth=token_info["access_token"])
-        top_tracks = sp.current_user_top_tracks(limit=20)["items"]
+        tracks = sp.current_user_top_tracks(limit=20)["items"]
 
-        session["track_uris"] = [track["uri"] for track in top_tracks]
-        session["track_names"] = [
-            f"{t['name']} by {t['artists'][0]['name']}" for t in top_tracks
+        session["track_info"] = [
+            {
+                "name": track["name"],
+                "artist": track["artists"][0]["name"],
+                "uri": track["uri"],
+                "image": track["album"]["images"][0]["url"] if track["album"]["images"] else ""
+            }
+            for track in tracks
         ]
+
         session["time_range"] = "medium_term"
 
         return redirect("/top-tracks")
@@ -94,15 +100,20 @@ def top_tracks():
 
     tracks = sp.current_user_top_tracks(limit=track_limit, time_range=time_range)["items"]
 
-    session["track_uris"] = [track["uri"] for track in tracks]
-    session["track_names"] = [
-        f"{track['name']} by {track['artists'][0]['name']}" for track in tracks
+    session["track_info"] = [
+        {
+            "name": track["name"],
+            "artist": track["artists"][0]["name"],
+            "uri": track["uri"],
+            "image": track["album"]["images"][0]["url"] if track["album"]["images"] else ""
+        }
+        for track in tracks
     ]
 
     return render_template("top_tracks.html",
-                           track_names=session["track_names"],
-                           time_range=time_range,
-                           track_limit=track_limit)
+                       track_info=session["track_info"],
+                       time_range=time_range,
+                       track_limit=track_limit)
 
 @app.route("/create-playlist", methods=["GET", "POST"])
 def create_playlist():
@@ -114,7 +125,9 @@ def create_playlist():
         return redirect("/login")
 
     user_id = sp.current_user()["id"]
-    track_uris = session.get("track_uris", [])
+    track_info = session.get("track_info", [])
+    track_uris = [track["uri"] for track in track_info]
+
 
     playlist_name = request.form.get("playlist_name", "My Top Tracks")
 
