@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spotify Search</title>
+  <style>
+    input {
+      width: 300px;
+      padding: 10px;
+      margin-top: 20px;
+      font-size: 16px;
+    }
+
+    .result {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 10px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .type {
+      font-size: 0.9em;
+      color: gray;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Search Spotify (No Login Required)</h1>
+  <input type="text" id="search" placeholder="Search for a track or artist">
+  <div id="results"></div>
+
+  <div style="margin-top: 40px; text-align: center;">
+    <a href="/" style="
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #eee;
+      border: none;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 5px;
+      color: black;
+    ">← Back to Home</a>
+  </div>
+
+  <script>
+    document.getElementById("search").addEventListener("input", async (e) => {
+      const q = e.target.value;
+      if (q.length < 2) return;
+
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+
+      const container = document.getElementById("results");
+      container.innerHTML = "";
+
+      data.forEach(item => {
+        container.innerHTML += `
+          <div class="result">
+            ${item.image ? `<img src="${item.image}" alt="image">` : ""}
+            <div class="info">
+              <div><strong>${item.name}</strong> ${item.type === 'track' ? `by ${item.artist}` : ''}</div>
+              <div class="type">${item.type}</div>
+            </div>
+          </div>
+        `;
+      });
+    });
+  </script>
+</body>
+</html>

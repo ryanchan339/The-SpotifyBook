@@ -157,9 +157,39 @@ def api_top_artists():
 
     return result
 
-@app.route("/new-page")
-def new_page():
-    return render_template("new_page.html")
+@app.route("/search")
+def search_page():
+    return render_template("search.html")
+
+
+@app.route("/api/search")
+def search_api():
+    query = request.args.get("q", "")
+    if not query:
+        return jsonify([])
+
+    sp = Spotify()  # No auth required for public search
+    results = sp.search(q=query, type="track,artist", limit=5)
+
+    response = []
+
+    for track in results.get("tracks", {}).get("items", []):
+        response.append({
+            "type": "track",
+            "name": track["name"],
+            "artist": track["artists"][0]["name"],
+            "image": track["album"]["images"][0]["url"]
+        })
+
+    for artist in results.get("artists", {}).get("items", []):
+        response.append({
+            "type": "artist",
+            "name": artist["name"],
+            "image": artist["images"][0]["url"] if artist["images"] else None
+        })
+
+    return jsonify(response)
+
 
 @app.route("/create-playlist", methods=["GET", "POST"])
 def create_playlist():
