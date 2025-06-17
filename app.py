@@ -42,13 +42,6 @@ def get_spotify_client():
 def index():
     return render_template("index.html")
 
-@app.route("/solo")
-def solo():
-    session.clear()
-    session["solo_mode"] = True
-    session["session_id"] = str(uuid.uuid4())
-    return redirect("/login")
-
 @app.route("/login")
 def login():
     session_id = session.get("session_id") or str(uuid.uuid4())
@@ -76,7 +69,6 @@ def callback():
                 "artist": track["artists"][0]["name"],
                 "uri": track["uri"],
                 "image": track["album"]["images"][0]["url"],
-                "preview_url": track["preview_url"]
             }
             for track in tracks
         ]
@@ -92,8 +84,6 @@ def callback():
 @app.route("/top-tracks")
 def top_tracks():
     return render_template("top_tracks.html")
-
-
 
 @app.route("/api/top-tracks")
 def api_top_tracks():
@@ -116,7 +106,6 @@ def api_top_tracks():
             "artist": t["artists"][0]["name"],
             "uri": t["uri"],
             "image": t["album"]["images"][0]["url"] if t["album"]["images"] else None,
-            "preview_url": t["preview_url"]
         }
         for t in tracks
     ]
@@ -168,7 +157,9 @@ def api_top_artists():
 
     return result
 
-
+@app.route("/new-page")
+def new_page():
+    return render_template("new_page.html")
 
 @app.route("/create-playlist", methods=["GET", "POST"])
 def create_playlist():
@@ -199,11 +190,6 @@ def create_playlist():
 
     playlist_url = playlist["external_urls"]["spotify"]
     return render_template("playlist_created.html", playlist_url=playlist_url)
-
-@app.route("/select")
-def select_mode():
-    return render_template("select_mode.html")
-
 
 if __name__ == "__main__":
     app.run(debug=True)
