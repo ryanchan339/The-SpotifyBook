@@ -1,4 +1,5 @@
 🎵 The SpotifyBook
+
 The SpotifyBook is a solo-mode Flask web application that uses Spotify's OAuth to let users view and interact with their personal music data. You can view your top tracks and top artists over various time ranges and even create a playlist directly from your top songs.
 
 🔧 Features
