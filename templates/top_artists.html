@@ -2,12 +2,17 @@
 <html>
 <head>
   <title>Your Top Artists</title>
+
+  <!-- CSS Styling for layout and visuals -->
   <style>
+    /* Navigation buttons container */
     .nav {
       margin-top: 20px;
       display: flex;
       gap: 20px;
     }
+
+    /* Button styles */
     .nav button {
       padding: 10px 20px;
       font-weight: bold;
@@ -15,15 +20,21 @@
       background-color: #eee;
       cursor: pointer;
     }
+
+    /* Active button style */
     .nav button.active {
       background-color: #ccc;
     }
+
+    /* Container for list of artists */
     .artist-list {
       display: flex;
       flex-direction: column;
       gap: 20px;
       margin-top: 30px;
     }
+
+    /* Individual artist block */
     .artist-item {
       display: flex;
       align-items: center;
@@ -31,18 +42,26 @@
       border-bottom: 1px solid #ccc;
       padding-bottom: 10px;
     }
+
+    /* Artist image style */
     .artist-item img {
       width: 80px;
       height: 80px;
       border-radius: 8px;
     }
+
+    /* Info block next to artist image */
     .artist-info {
       display: flex;
       flex-direction: column;
     }
+
+    /* Artist name style */
     .artist-name {
       font-weight: bold;
     }
+
+    /* Genre list style */
     .genres {
       color: gray;
       font-size: 0.9em;
@@ -50,13 +69,17 @@
   </style>
 </head>
 <body>
+
+  <!-- Page title -->
   <h1>Your Top Artists</h1>
 
+  <!-- Top navigation buttons -->
   <div class="nav">
     <a href="/top-tracks"><button>Top Tracks</button></a>
     <a href="/top-artists"><button class="active">Top Artists</button></a>
   </div>
 
+  <!-- Dropdown to choose time range -->
   <label for="time_range">Choose time range:</label>
   <select id="time_range" onchange="loadArtists()">
     <option value="short_term">Past 4 Weeks</option>
@@ -64,19 +87,29 @@
     <option value="long_term">All Time</option>
   </select>
 
+  <!-- Container where artist cards will be dynamically inserted -->
   <div id="artist-container" class="artist-list"></div>
 
+  <!-- JavaScript to load top artists from the backend API -->
   <script>
+    // Function to fetch and render top artists for selected time range
     async function loadArtists() {
       const timeRange = document.getElementById("time_range").value;
+
+      // Call the backend API for top artists
       const res = await fetch(`/api/top-artists?time_range=${timeRange}`);
       const data = await res.json();
 
+      // Clear existing artist list
       const container = document.getElementById("artist-container");
       container.innerHTML = "";
 
+      // Loop through each artist and render its card
       data.forEach(artist => {
-        const genres = artist.genres && artist.genres.length > 0 ? artist.genres.join(", ") : "No genres listed";
+        const genres = artist.genres && artist.genres.length > 0
+          ? artist.genres.join(", ")
+          : "No genres listed";
+
         container.innerHTML += `
           <div class="artist-item">
             <img src="${artist.image}" alt="Artist image">
@@ -89,8 +122,23 @@
       });
     }
 
-    // Load default on page load
+    // Load medium-term top artists on initial page load
     loadArtists();
   </script>
+
+  <!-- Back to Home button at the bottom of the page -->
+  <div style="margin-top: 40px; text-align: center;">
+    <a href="/" style="
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #eee;
+      border: none;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 5px;
+      color: black;
+    ">← Back to Home</a>
+  </div>
+
 </body>
 </html>
