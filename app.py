@@ -7,6 +7,12 @@ from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
 from flask import jsonify
+from spotipy.oauth2 import SpotifyClientCredentials
+
+client_credentials_manager = SpotifyClientCredentials(
+    client_id=os.getenv("SPOTIPY_CLIENT_ID"),
+    client_secret=os.getenv("SPOTIPY_CLIENT_SECRET")
+)
 
 load_dotenv()
 
@@ -168,27 +174,33 @@ def search_api():
     if not query:
         return jsonify([])
 
-    sp = Spotify()  # No auth required for public search
-    results = sp.search(q=query, type="track,artist", limit=5)
+    try:
+        sp = Spotify(client_credentials_manager=client_credentials_manager)
+        results = sp.search(q=query, type="track,artist", limit=5)
 
-    response = []
+        response = []
 
-    for track in results.get("tracks", {}).get("items", []):
-        response.append({
-            "type": "track",
-            "name": track["name"],
-            "artist": track["artists"][0]["name"],
-            "image": track["album"]["images"][0]["url"]
-        })
+        for track in results.get("tracks", {}).get("items", []):
+            response.append({
+                "type": "track",
+                "name": track["name"],
+                "artist": track["artists"][0]["name"],
+                "image": track["album"]["images"][0]["url"]
+            })
 
-    for artist in results.get("artists", {}).get("items", []):
-        response.append({
-            "type": "artist",
-            "name": artist["name"],
-            "image": artist["images"][0]["url"] if artist["images"] else None
-        })
+        for artist in results.get("artists", {}).get("items", []):
+            response.append({
+                "type": "artist",
+                "name": artist["name"],
+                "image": artist["images"][0]["url"] if artist["images"] else None
+            })
 
-    return jsonify(response)
+        return jsonify(response)
+
+    except Exception as e:
+        print("❌ Error in /api/search:", e)
+        return jsonify({"error": "Search failed"}), 500
+
 
 
 @app.route("/create-playlist", methods=["GET", "POST"])
