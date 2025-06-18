@@ -19,37 +19,6 @@ The SpotifyBook is a solo-mode Flask web application that uses Spotify's OAuth t
 
 🚀 Live Demo
 
-🛠️ Setup Instructions
-1. Clone the Repo
-bash
-Copy
-Edit
-git clone https://github.com/yourusername/The-SpotifyBook.git
-cd The-SpotifyBook
-2. Create a .env file
-Inside the root directory, create a .env file with the following:
-
-env
-Copy
-Edit
-SPOTIPY_CLIENT_ID=your_spotify_client_id
-SPOTIPY_CLIENT_SECRET=your_spotify_client_secret
-SPOTIPY_REDIRECT_URI=http://localhost:5000/callback
-FLASK_SECRET_KEY=your_random_secret_key
-You can get these credentials from: https://developer.spotify.com/dashboard
-
-3. Install Dependencies
-bash
-Copy
-Edit
-pip install -r requirements.txt
-4. Run the Flask App
-bash
-Copy
-Edit
-python app.py
-Then open http://localhost:5000 in your browser.
-
 📁 Project Structure
 cpp
 Copy
