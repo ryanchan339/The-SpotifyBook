@@ -1,7 +1,7 @@
 import os
 import uuid
-import json
 import time
+import requests
 from flask import Flask, session, redirect, request, render_template
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
